@@ -110,8 +110,8 @@ export default function ReportItemsPage() {
         data={filteredItems}
         customStyles={customStyles}
         pagination
-        paginationPerPage={20}
-        paginationRowsPerPageOptions={[10, 20, 30, 50, 100]}
+        paginationPerPage={50}
+        paginationRowsPerPageOptions={[25, 50, 100, 200]}
         highlightOnHover
         striped
         dense

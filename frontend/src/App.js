@@ -10,6 +10,7 @@ import ReportSalesPage from "./pages/report/ReportSalesPage";
 import ReportItemsPage from "./pages/report/ReportItemsPage";
 import ReportOmzetPage from "./pages/report/ReportOmzetPage";
 import ReportProfitPage from "./pages/report/ReportProfitPage";
+import BackupPage from "./pages/BackupPage";
 
 export default function App() {
   const linkStyle = {
@@ -156,6 +157,17 @@ export default function App() {
               >
                 📊 Laporan
               </NavLink>
+              <NavLink
+                to="/backup"
+                style={({ isActive }) =>
+                  isActive
+                    ? { ...linkStyle, ...activeStyle }
+                    : { ...linkStyle, ...navDefaultStyle }
+                }
+              >
+                💾 Backup
+              </NavLink>
+
             </nav>
           </div>
         </header>
@@ -194,6 +206,7 @@ export default function App() {
               <Route path="/report/items" element={<ReportItemsPage />} />
               <Route path="/report/omzet" element={<ReportOmzetPage />} />
               <Route path="/report/profit" element={<ReportProfitPage />} />
+              <Route path="/backup" element={<BackupPage />} />
             </Routes>
           </div>
         </main>

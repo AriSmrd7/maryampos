@@ -181,8 +181,8 @@ export default function SalesHistoryPage() {
         columns={columns}
         data={filteredSales}
         pagination
-        paginationPerPage={20}
-        paginationRowsPerPageOptions={[10, 20, 30, 50, 100]}
+        paginationPerPage={50}
+        paginationRowsPerPageOptions={[25, 50, 100, 200]}
         highlightOnHover
         responsive
         customStyles={customStyles}
