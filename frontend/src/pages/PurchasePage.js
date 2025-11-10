@@ -222,15 +222,18 @@ export default function PurchasePage() {
       name: "Kode",
       selector: (row) => row.code,
       sortable: true,
-      width: "100px",
+      width: "200px",
       center: true,
     },
-    { name: "Nama Barang", selector: (row) => row.name, sortable: true },
+    { name: "Nama Barang", 
+      selector: (row) => row.name, 
+      sortable: true, width: "330px"
+    },
     {
       name: "Jumlah Isi",
       selector: (row) => row.quantity,
       sortable: true,
-      width: "180px",
+      width: "150px",
       center: true,
     },
     {

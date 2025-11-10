@@ -7,6 +7,7 @@ import { FaSearch } from "react-icons/fa";
 const API_URL = "http://localhost:4000/api";
 
 export default function MarginPage() {
+  const [previewSellPrice, setPreviewSellPrice] = useState(null);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [margin, setMargin] = useState("");
@@ -18,9 +19,25 @@ export default function MarginPage() {
     setItems(res.data);
   };
 
+  
   useEffect(() => {
     fetchItems();
   }, []);
+
+  useEffect(() => {
+    if (!selectedItem || !margin) {
+      setPreviewSellPrice(null);
+      return;
+    }
+
+    const item = items.find(i => i.code === selectedItem.value);
+    if (item && item.buy_price) {
+      const newPrice = item.buy_price * (1 + parseFloat(margin || 0) / 100);
+      setPreviewSellPrice(newPrice);
+    } else {
+      setPreviewSellPrice(null);
+    }
+  }, [selectedItem, margin, items]);
 
   // Inside your component, add helper functions
   const handleFocusStyle = (e) => {
@@ -176,7 +193,7 @@ export default function MarginPage() {
         }}
       >
         {/* Dropdown cari barang */}
-        <div style={{ flex: 1, minWidth: 300, maxWidth: 350 }}>
+        <div style={{ flex: 1, minWidth: "100%" }}>
           <Select
             value={selectedItem}
             onChange={setSelectedItem}
@@ -201,23 +218,40 @@ export default function MarginPage() {
           <label style={{ marginBottom: 4, fontWeight: "bold", color: "#34495E" }}>
             Margin (%)
           </label>
-          <input
-            placeholder="Masukkan margin"
-            type="number"
-            value={margin}
-            onChange={(e) => setMargin(e.target.value)}
-            onFocus={handleFocusStyle}
-            onBlur={handleBlurStyle}
-            onMouseOver={handleHoverStyle}
-            onMouseOut={handleUnhoverStyle}
-            style={{
-              width: 140,
-              padding: 8,
-              borderRadius: 5,
-              border: "1px solid #ccc",
-              transition: "all 0.2s ease",
-            }}
-          />
+            <input
+              placeholder="Masukkan margin"
+              type="number"
+              value={margin}
+              onChange={(e) => {
+                const val = e.target.value;
+                setMargin(val);
+                if (selectedItem) {
+                  const item = items.find(i => i.code === selectedItem.value);
+                  if (item && item.buy_price) {
+                    const newPrice = item.buy_price * (1 + parseFloat(val || 0) / 100);
+                    setPreviewSellPrice(newPrice);
+                  } else {
+                    setPreviewSellPrice(null);
+                  }
+                }
+              }}
+              onFocus={handleFocusStyle}
+              onBlur={handleBlurStyle}
+              onMouseOver={handleHoverStyle}
+              onMouseOut={handleUnhoverStyle}
+              style={{
+                width: 140,
+                padding: 8,
+                borderRadius: 5,
+                border: "1px solid #ccc",
+                transition: "all 0.2s ease",
+              }}
+            />
+          {previewSellPrice && (
+            <small style={{ color: "#27AE60", fontWeight: "bold", marginTop: 4 }}>
+              → Perkiraan Harga Jual: Rp {Math.round(previewSellPrice).toLocaleString()}
+            </small>
+          )}
         </div>
 
         {/* Tombol Hitung */}
