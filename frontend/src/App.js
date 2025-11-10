@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, NavLink } from "react-router-dom";
 import PurchasePage from "./pages/PurchasePage";
 import MarginPage from "./pages/MarginPage";
 import SalesPage from "./pages/SalesPage";
@@ -48,93 +48,123 @@ export default function App() {
         }}
       >
         {/* ===== NAVBAR FIXED ===== */}
-      <header
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          backgroundColor: "#fff",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-          zIndex: 999,
-          padding: "10px 0",
-        }}
-      >
-        <div
+        <header
           style={{
-            width: "95%",
-            maxWidth: 1200,
-            margin: "0 auto",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            backgroundColor: "#fff",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+            zIndex: 999,
+            padding: "10px 0",
           }}
         >
-          {/* Logo + teks agak ke kiri */}
-          <div style={{ textAlign: "left", marginLeft: -150 }}>
-            <h1 style={{ margin: 0, color: "#1F618D", fontSize: 22, fontWeight:"bolder" }}>
-              🧾 Maryam Print Corner
-            </h1>
-            <small style={{ color: "#566573", fontSize: 12, marginLeft: 37 }}>Toko Alat Tulis & Fotokopi</small>
+          <div
+            style={{
+              width: "95%",
+              maxWidth: 1200,
+              margin: "0 auto",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            {/* Logo + teks agak ke kiri */}
+            <div style={{ textAlign: "left", marginLeft: -150 }}>
+              <h1
+                style={{
+                  margin: 0,
+                  color: "#1F618D",
+                  fontSize: 22,
+                  fontWeight: "bolder",
+                }}
+              >
+                🧾 Maryam Print Corner
+              </h1>
+              <small
+                style={{
+                  color: "#566573",
+                  fontSize: 12,
+                  marginLeft: 37,
+                }}
+              >
+                Toko Alat Tulis & Fotokopi
+              </small>
+            </div>
+
+            {/* Navbar tetap di kanan */}
+            <nav
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+              }}
+            >
+              <NavLink
+                to="/purchase"
+                style={({ isActive }) =>
+                  isActive
+                    ? { ...linkStyle, ...activeStyle }
+                    : { ...linkStyle, ...navDefaultStyle }
+                }
+              >
+                📦 Pembelian
+              </NavLink>
+
+              <NavLink
+                to="/margin"
+                style={({ isActive }) =>
+                  isActive
+                    ? { ...linkStyle, ...activeStyle }
+                    : { ...linkStyle, ...navDefaultStyle }
+                }
+              >
+                💰 Hitung Laba
+              </NavLink>
+
+              <NavLink
+                to="/sales"
+                style={({ isActive }) =>
+                  isActive
+                    ? { ...linkStyle, ...activeStyle }
+                    : { ...linkStyle, ...navDefaultStyle }
+                }
+              >
+                🛒 Penjualan
+              </NavLink>
+
+              <NavLink
+                to="/sales-history"
+                style={({ isActive }) =>
+                  isActive
+                    ? { ...linkStyle, ...activeStyle }
+                    : { ...linkStyle, ...navDefaultStyle }
+                }
+              >
+                📋 Riwayat
+              </NavLink>
+
+              <NavLink
+                to="/report"
+                style={({ isActive }) =>
+                  isActive
+                    ? { ...linkStyle, ...activeStyle }
+                    : { ...linkStyle, ...navDefaultStyle }
+                }
+              >
+                📊 Laporan
+              </NavLink>
+            </nav>
           </div>
-
-          {/* Navbar tetap di kanan */}
-          <nav style={{ display: "flex", flexWrap: "wrap", alignItems: "center" }}>
-            <NavLink
-              to="/purchase"
-              style={({ isActive }) =>
-                isActive ? { ...linkStyle, ...activeStyle } : { ...linkStyle, ...navDefaultStyle }
-              }
-            >
-              📦 Pembelian
-            </NavLink>
-
-            <NavLink
-              to="/margin"
-              style={({ isActive }) =>
-                isActive ? { ...linkStyle, ...activeStyle } : { ...linkStyle, ...navDefaultStyle }
-              }
-            >
-              💰 Hitung Laba
-            </NavLink>
-
-            <NavLink
-              to="/sales"
-              style={({ isActive }) =>
-                isActive ? { ...linkStyle, ...activeStyle } : { ...linkStyle, ...navDefaultStyle }
-              }
-            >
-              🛒 Penjualan
-            </NavLink>
-
-            <NavLink
-              to="/sales-history"
-              style={({ isActive }) =>
-                isActive ? { ...linkStyle, ...activeStyle } : { ...linkStyle, ...navDefaultStyle }
-              }
-            >
-              📋 Riwayat
-            </NavLink>
-
-            <NavLink
-              to="/report"
-              style={({ isActive }) =>
-                isActive ? { ...linkStyle, ...activeStyle } : { ...linkStyle, ...navDefaultStyle }
-              }
-            >
-              📊 Laporan
-            </NavLink>
-          </nav>
-        </div>
-      </header>
-
+        </header>
 
         {/* ===== MAIN CONTENT ===== */}
         <main
           style={{
-            flex: 1, // penting agar main bisa grow dan dorong footer ke bawah
-            paddingTop: 90, // agar konten tidak tertutup navbar
+            flex: 1,
+            paddingTop: 90,
             width: "95%",
             maxWidth: 1600,
             margin: "0 auto",
@@ -175,7 +205,7 @@ export default function App() {
             fontSize: 13,
             textAlign: "center",
             padding: "15px 0",
-            marginTop: "auto", // dorong ke bawah
+            marginTop: "auto",
           }}
         >
           &copy; {new Date().getFullYear()} Maryam Print Corner. All rights reserved.

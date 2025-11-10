@@ -109,3 +109,41 @@ exports.getPurchaseById = (req, res) => {
     res.json(row);
   });
 };
+
+// --- Hapus pembelian barang
+exports.deletePurchase = (req, res) => {
+  const { id } = req.params;
+
+  // Ambil data pembelian dulu
+  db.get("SELECT * FROM purchases WHERE id = ?", [id], (err, purchase) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!purchase) return res.status(404).json({ error: "Data pembelian tidak ditemukan" });
+
+    // Kurangi stok dari tabel items
+    db.get("SELECT * FROM items WHERE code = ?", [purchase.code], (err2, item) => {
+      if (err2) return res.status(500).json({ error: err2.message });
+      if (!item) {
+        // Kalau item tidak ditemukan, tetap hapus purchase saja
+        db.run("DELETE FROM purchases WHERE id = ?", [id], (err3) => {
+          if (err3) return res.status(500).json({ error: err3.message });
+          return res.json({ message: "✅ Pembelian dihapus, item tidak ditemukan" });
+        });
+      } else {
+        const newStock = item.stock - purchase.quantity;
+        db.run(
+          "UPDATE items SET stock = ? WHERE code = ?",
+          [Math.max(newStock, 0), purchase.code],
+          (err4) => {
+            if (err4) return res.status(500).json({ error: err4.message });
+
+            // Hapus purchase
+            db.run("DELETE FROM purchases WHERE id = ?", [id], (err5) => {
+              if (err5) return res.status(500).json({ error: err5.message });
+              res.json({ message: "✅ Pembelian dihapus dan stok diperbarui" });
+            });
+          }
+        );
+      }
+    });
+  });
+};

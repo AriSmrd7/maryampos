@@ -81,7 +81,12 @@ export default function PurchasePage() {
     setButtonClicked(true);
     setTimeout(() => setButtonClicked(false), 200);
 
-    if (!modalData.code || !modalData.name || !modalData.quantity || !modalData.total_cost) {
+    if (
+      !modalData.code ||
+      !modalData.name ||
+      !modalData.quantity ||
+      !modalData.total_cost
+    ) {
       alert("Lengkapi semua field!");
       return;
     }
@@ -94,7 +99,7 @@ export default function PurchasePage() {
         total_cost: modalData.total_cost,
       });
 
-      const existingItem = items.find(i => i.code === modalData.code);
+      const existingItem = items.find((i) => i.code === modalData.code);
       if (existingItem) {
         await axios.put(`${API_URL}/items/${existingItem.id}/stock`, {
           stock: existingItem.stock + modalData.quantity,
@@ -104,7 +109,15 @@ export default function PurchasePage() {
       fetchPurchases();
       fetchItems();
 
-      setModalData({ id: "", name: "", quantity: 0, total_cost: 0, stock: 0, code: "", itemId: null });
+      setModalData({
+        id: "",
+        name: "",
+        quantity: 0,
+        total_cost: 0,
+        stock: 0,
+        code: "",
+        itemId: null,
+      });
 
       setShowMessage(true);
       setTimeout(() => setShowMessage(false), 2000);
@@ -128,6 +141,37 @@ export default function PurchasePage() {
     });
     setManualStock(false);
     setSelectedPurchase(purchase.id);
+  };
+
+  // ==== HAPUS PEMBELIAN ====
+  const handleDeletePurchase = async (id, code) => {
+    const confirm = await Swal.fire({
+      title: "Hapus Pembelian?",
+      text: `Yakin ingin menghapus data dengan kode "${code}"?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#E74C3C",
+      cancelButtonColor: "#7F8C8D",
+      confirmButtonText: "Ya, hapus!",
+      cancelButtonText: "Batal",
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      await axios.delete(`${API_URL}/purchases/${id}`);
+      await fetchPurchases(); // Refresh list
+      Swal.fire({
+        icon: "success",
+        title: "Dihapus!",
+        text: "Data pembelian berhasil dihapus.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "Gagal menghapus data pembelian", "error");
+    }
   };
 
   const handleSaveUpdate = async () => {
@@ -160,40 +204,59 @@ export default function PurchasePage() {
 
   // ==== FILTER DATA ====
   const filteredPurchases = purchases.filter(
-    p =>
+    (p) =>
       p.code.toLowerCase().includes(filterText.toLowerCase()) ||
       p.name.toLowerCase().includes(filterText.toLowerCase())
   );
 
   // ==== COLUMNS DATATABLE ====
   const columns = [
-    { name: "ID", selector: row => row.id, sortable: true, width: "60px", center: true },
-    { name: "Kode", selector: row => row.code, sortable: true, width: "100px", center: true },
-    { name: "Nama Barang", selector: row => row.name, sortable: true },
-    { name: "Jumlah Isi", selector: row => row.quantity, sortable: true, width: "180px", center: true },
-    { 
-      name: "Harga Beli Satuan", 
-      selector: row => Math.round(row.total_cost / row.quantity).toLocaleString(), 
-      sortable: true, 
-      right: true 
-    },
-    { 
-      name: "Harga Total Beli", 
-      selector: row => Math.round(Number(row.total_cost)).toLocaleString(), 
-      sortable: true, 
-      right: true 
-    },
-    { 
-      name: "Stok Saat Ini", 
-      selector: row => {
-        const item = items.find(i => i.code === row.code);
-        return item?.stock || 0;
-      }, 
-      sortable: true, 
-      width: "160px", 
+    {
+      name: "ID",
+      selector: (row) => row.id,
+      sortable: true,
+      width: "60px",
       center: true,
-      cell: row => {
-        const item = items.find(i => i.code === row.code);
+    },
+    {
+      name: "Kode",
+      selector: (row) => row.code,
+      sortable: true,
+      width: "100px",
+      center: true,
+    },
+    { name: "Nama Barang", selector: (row) => row.name, sortable: true },
+    {
+      name: "Jumlah Isi",
+      selector: (row) => row.quantity,
+      sortable: true,
+      width: "180px",
+      center: true,
+    },
+    {
+      name: "Harga Beli Satuan",
+      selector: (row) =>
+        Math.round(row.total_cost / row.quantity).toLocaleString(),
+      sortable: true,
+      right: true,
+    },
+    {
+      name: "Harga Total Beli",
+      selector: (row) => Math.round(Number(row.total_cost)).toLocaleString(),
+      sortable: true,
+      right: true,
+    },
+    {
+      name: "Stok Saat Ini",
+      selector: (row) => {
+        const item = items.find((i) => i.code === row.code);
+        return item?.stock || 0;
+      },
+      sortable: true,
+      width: "160px",
+      center: true,
+      cell: (row) => {
+        const item = items.find((i) => i.code === row.code);
         const stock = item?.stock ?? 0;
 
         // Warna berdasarkan level stok
@@ -227,32 +290,51 @@ export default function PurchasePage() {
             {stock.toLocaleString()}
           </div>
         );
-      }
+      },
     },
 
     {
       name: "Aksi",
-      cell: row => (
-        <button
-          onClick={() => openUpdateModal(row)}
-          style={{
-            padding: "4px 8px",
-            backgroundColor: "#ffa20dff",
-            color: "#fff",
-            border: "none",
-            borderRadius: 4,
-            minWidth: 60,
-            cursor: "pointer",
-            fontSize: "0.75rem",
-            fontWeight: "bolder"
-          }}
-        >
-          UPDATE
-        </button>
+      cell: (row) => (
+        <div style={{ display: "flex", gap: "6px" }}>
+          <button
+            onClick={() => openUpdateModal(row)}
+            style={{
+              padding: "4px 8px",
+              backgroundColor: "#ffa20dff",
+              color: "#fff",
+              border: "none",
+              borderRadius: 4,
+              minWidth: 60,
+              cursor: "pointer",
+              fontSize: "0.75rem",
+              fontWeight: "bolder",
+            }}
+          >
+            UPDATE
+          </button>
+
+          <button
+            onClick={() => handleDeletePurchase(row.id, row.code)}
+            style={{
+              padding: "4px 8px",
+              backgroundColor: "#E74C3C",
+              color: "#fff",
+              border: "none",
+              borderRadius: 4,
+              minWidth: 60,
+              cursor: "pointer",
+              fontSize: "0.75rem",
+              fontWeight: "bolder",
+            }}
+          >
+            DELETE
+          </button>
+        </div>
       ),
-      width: "90px",
-      center: true
-    }
+      width: "240px",
+      center: true,
+    },
   ];
 
   const customStyles = {
@@ -266,23 +348,26 @@ export default function PurchasePage() {
         backgroundColor: "#2E86C1",
         color: "#fff",
         textAlign: "center",
-        borderRight: "1px solid #ccc"
-      }
+        borderRight: "1px solid #ccc",
+      },
     },
-    cells: { 
-      style: { 
+    cells: {
+      style: {
         padding: "4px 6px",
-        borderRight: "1px solid #ccc" 
-      } 
+        borderRight: "1px solid #ccc",
+      },
     },
     rows: {
       style: { minHeight: "28px", borderBottom: "1px solid #ccc" },
-      highlightOnHoverStyle: { backgroundColor: 'rgba(46, 134, 193, 0.1)', outline: 'none' }
-    }
+      highlightOnHoverStyle: {
+        backgroundColor: "rgba(46, 134, 193, 0.1)",
+        outline: "none",
+      },
+    },
   };
 
   // === FUNGSI EXPORT ===
-// === FUNGSI EXPORT ===
+  // === FUNGSI EXPORT ===
   const handleExportExcel = () => {
     if (!filteredPurchases || filteredPurchases.length === 0) {
       Swal.fire({
@@ -299,12 +384,17 @@ export default function PurchasePage() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Pembelian");
 
-      const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
       const blob = new Blob([excelBuffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
-      const fileName = `pembelian_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const fileName = `pembelian_${new Date()
+        .toISOString()
+        .slice(0, 10)}.xlsx`;
       saveAs(blob, fileName);
 
       // ✅ Notifikasi sukses
@@ -326,7 +416,6 @@ export default function PurchasePage() {
     }
   };
 
-
   // === FUNGSI IMPORT ===
   const handleImportExcel = async (e) => {
     const file = e.target.files[0];
@@ -341,7 +430,11 @@ export default function PurchasePage() {
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
       if (!jsonData.length || !jsonData[0].code) {
-        Swal.fire("Format salah", "File Excel tidak memiliki kolom 'code'", "error");
+        Swal.fire(
+          "Format salah",
+          "File Excel tidak memiliki kolom 'code'",
+          "error"
+        );
         return;
       }
 
@@ -391,260 +484,290 @@ export default function PurchasePage() {
     reader.readAsArrayBuffer(file);
   };
 
-
   return (
     <div style={{ padding: 20, fontFamily: "Arial, sans-serif" }}>
-    <h2 style={{ color: "#2E86C1", marginBottom: 15 }}>📦 Pembelian Barang</h2>
+      <h2 style={{ color: "#2E86C1", marginBottom: 15 }}>
+        📦 Pembelian Barang
+      </h2>
 
-    {/* ==== FORM TAMBAH ==== */}
-    <fieldset
-      style={{
-        border: "2px solid #c7c7c7ff",
-        borderRadius: 8,
-        padding: "15px 20px",
-        marginBottom: 25,
-        backgroundColor: "#F8F9F9",
-      }}
-    >
-      <legend
+      {/* ==== FORM TAMBAH ==== */}
+      <fieldset
         style={{
-          padding: "0 10px",
-          color: "#2E86C1",
-          fontWeight: "bold",
-          fontSize: "1rem",
+          border: "2px solid #c7c7c7ff",
+          borderRadius: 8,
+          padding: "15px 20px",
+          marginBottom: 25,
+          backgroundColor: "#F8F9F9",
         }}
       >
-        Form Pembelian
-      </legend>
+        <legend
+          style={{
+            padding: "0 10px",
+            color: "#2E86C1",
+            fontWeight: "bold",
+            fontSize: "1rem",
+          }}
+        >
+          Form Pembelian
+        </legend>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          flexWrap: "wrap",
-          alignItems: "flex-end",
-        }}
-      >
-        {/* === Input Kode === */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label>Kode</label>
-          <input
-            type="text"
-            value={modalData.code}
-            onChange={(e) => setModalData({ ...modalData, code: e.target.value })}
-            style={{ ...inputStyle, width: inputWidths.code }}
-            onFocus={handleFocusStyle}
-            onBlur={handleBlurStyle}
-          />
-        </div>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+            alignItems: "flex-end",
+          }}
+        >
+          {/* === Input Kode === */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <label>Kode</label>
+            <input
+              type="text"
+              value={modalData.code}
+              onChange={(e) =>
+                setModalData({ ...modalData, code: e.target.value })
+              }
+              style={{ ...inputStyle, width: inputWidths.code }}
+              onFocus={handleFocusStyle}
+              onBlur={handleBlurStyle}
+            />
+          </div>
 
-        {/* === Input Nama === */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label>Nama Barang</label>
-          <input
-            type="text"
-            value={modalData.name}
-            onChange={(e) => setModalData({ ...modalData, name: e.target.value })}
-            style={{ ...inputStyle, width: inputWidths.name }}
-            onFocus={handleFocusStyle}
-            onBlur={handleBlurStyle}
-          />
-        </div>
+          {/* === Input Nama === */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <label>Nama Barang</label>
+            <input
+              type="text"
+              value={modalData.name}
+              onChange={(e) =>
+                setModalData({ ...modalData, name: e.target.value })
+              }
+              style={{ ...inputStyle, width: inputWidths.name }}
+              onFocus={handleFocusStyle}
+              onBlur={handleBlurStyle}
+            />
+          </div>
 
-        {/* === Input Jumlah === */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label>Jumlah Isi</label>
-          <input
-            type="number"
-            value={modalData.quantity}
-            onChange={(e) =>
-              setModalData({ ...modalData, quantity: parseInt(e.target.value) })
-            }
-            style={{ ...inputStyle, width: inputWidths.quantity }}
-            onFocus={handleFocusStyle}
-            onBlur={handleBlurStyle}
-          />
-        </div>
+          {/* === Input Jumlah === */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <label>Jumlah Isi</label>
+            <input
+              type="number"
+              value={modalData.quantity}
+              onChange={(e) =>
+                setModalData({
+                  ...modalData,
+                  quantity: parseInt(e.target.value),
+                })
+              }
+              style={{ ...inputStyle, width: inputWidths.quantity }}
+              onFocus={handleFocusStyle}
+              onBlur={handleBlurStyle}
+            />
+          </div>
 
-        {/* === Input Harga === */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label>Harga Total</label>
-          <input
-            type="number"
-            value={modalData.total_cost}
-            onChange={(e) =>
-              setModalData({ ...modalData, total_cost: parseFloat(e.target.value) })
-            }
-            style={{ ...inputStyle, width: inputWidths.total_cost }}
-            onFocus={handleFocusStyle}
-            onBlur={handleBlurStyle}
-          />
-        </div>
+          {/* === Input Harga === */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <label>Harga Total</label>
+            <input
+              type="number"
+              value={modalData.total_cost}
+              onChange={(e) =>
+                setModalData({
+                  ...modalData,
+                  total_cost: parseFloat(e.target.value),
+                })
+              }
+              style={{ ...inputStyle, width: inputWidths.total_cost }}
+              onFocus={handleFocusStyle}
+              onBlur={handleBlurStyle}
+            />
+          </div>
 
-        {/* === Tombol Tambah === */}
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-          <button
-            onClick={handleAddPurchase}
+          {/* === Tombol Tambah === */}
+          <div
             style={{
-              padding: "6px 12px",
-              backgroundColor: "#28B463",
-              color: "#fff",
-              border: "none",
-              borderRadius: 5,
-              transform: buttonClicked ? "scale(0.95)" : "scale(1)",
-              transition: "transform 0.2s",
-              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-end",
             }}
           >
-            Tambah
-          </button>
+            <button
+              onClick={handleAddPurchase}
+              style={{
+                padding: "6px 12px",
+                backgroundColor: "#28B463",
+                color: "#fff",
+                border: "none",
+                borderRadius: 5,
+                transform: buttonClicked ? "scale(0.95)" : "scale(1)",
+                transition: "transform 0.2s",
+                cursor: "pointer",
+              }}
+            >
+              Tambah
+            </button>
+          </div>
         </div>
-      </div>
-    </fieldset>
+      </fieldset>
 
-    {/* === Tombol Export & Import (kanan atas tabel) === */}
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "flex-end",
-        alignItems: "center",
-        gap: 12,
-        marginBottom: 5,
-        marginTop: 30,
-      }}
-    >
-      {/* Tombol Export */}
-      <button
-        onClick={handleExportExcel}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "8px 14px",
-          backgroundColor: "#2ECC71", // hijau lembut
-          color: "#fff",
-          border: "none",
-          borderRadius: 6,
-          cursor: "pointer",
-          fontWeight: 600,
-          fontSize: 14,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          transition: "all 0.2s ease",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#27AE60")}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2ECC71")}
-      >
-        <FaFileExcel size={18} />
-        Export Excel
-      </button>
-
-      {/* Tombol Import */}
-      <label
-        htmlFor="importExcel"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "8px 14px",
-          backgroundColor: "#3498DB", // biru lembut
-          color: "#fff",
-          border: "none",
-          borderRadius: 6,
-          cursor: "pointer",
-          fontWeight: 600,
-          fontSize: 14,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          transition: "all 0.2s ease",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#2980B9")}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#3498DB")}
-      >
-        <FaFileImport size={18} />
-        Import Excel
-      </label>
-
-      <input
-        id="importExcel"
-        type="file"
-        accept=".xlsx,.xls"
-        onChange={handleImportExcel}
-        style={{ display: "none" }}
-      />
-    </div>
-
-    {/* ==== TABLE SECTION TANPA FIELDSET ==== */}
-    <h3
-      style={{
-        color: "#303030",
-        fontWeight: "bold",
-        marginBottom: 10,
-        fontSize: "1rem",
-      }}
-    >
-      📋 Daftar Pembelian
-    </h3>
-
-    {/* === Filter === */}
-    <div style={{ position: "relative", display: "inline-block", marginBottom: 10 }}>
-      <FaSearch
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: 10,
-          transform: "translateY(-50%)",
-          color: "#888",
-          pointerEvents: "none",
-        }}
-      />
-      <input
-        type="text"
-        placeholder="Cari kode atau nama barang..."
-        value={filterText}
-        onChange={(e) => setFilterText(e.target.value)}
-        style={{
-          padding: "6px 8px 6px 32px",
-          fontSize: "1rem",
-          width: "250px",
-          borderRadius: 4,
-          border: "1px solid #ccc",
-          transition: "all 0.2s ease",
-          outline: "none",
-        }}
-        onFocus={(e) => (e.currentTarget.style.borderColor = "#2ECC71")}
-        onBlur={(e) => (e.currentTarget.style.borderColor = "#ccc")}
-      />
-    </div>
-
-    {/* === Notifikasi === */}
-    {showMessage && (
+      {/* === Tombol Export & Import (kanan atas tabel) === */}
       <div
         style={{
-          marginBottom: 10,
-          padding: "6px 12px",
-          backgroundColor: "#D5F5E3",
-          color: "#145A32",
-          borderRadius: 5,
-          fontWeight: "bold",
-          transition: "opacity 0.3s",
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 5,
+          marginTop: 30,
         }}
       >
-        ✅ Baru saja menambah data
+        {/* Tombol Export */}
+        <button
+          onClick={handleExportExcel}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 14px",
+            backgroundColor: "#2ECC71", // hijau lembut
+            color: "#fff",
+            border: "none",
+            borderRadius: 6,
+            cursor: "pointer",
+            fontWeight: 600,
+            fontSize: 14,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#27AE60")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#2ECC71")
+          }
+        >
+          <FaFileExcel size={18} />
+          Export Excel
+        </button>
+
+        {/* Tombol Import */}
+        <label
+          htmlFor="importExcel"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 14px",
+            backgroundColor: "#3498DB", // biru lembut
+            color: "#fff",
+            border: "none",
+            borderRadius: 6,
+            cursor: "pointer",
+            fontWeight: 600,
+            fontSize: 14,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#2980B9")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#3498DB")
+          }
+        >
+          <FaFileImport size={18} />
+          Import Excel
+        </label>
+
+        <input
+          id="importExcel"
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={handleImportExcel}
+          style={{ display: "none" }}
+        />
       </div>
-    )}
 
-    {/* === Tabel === */}
-    <DataTable
-      columns={columns}
-      data={filteredPurchases}
-      pagination
-      paginationPerPage={20}
-      paginationRowsPerPageOptions={[10, 20, 30, 50, 100]}
-      highlightOnHover
-      responsive
-      customStyles={customStyles}
-      noDataComponent="Belum ada data pembelian"
-    />
+      {/* ==== TABLE SECTION TANPA FIELDSET ==== */}
+      <h3
+        style={{
+          color: "#303030",
+          fontWeight: "bold",
+          marginBottom: 10,
+          fontSize: "1rem",
+        }}
+      >
+        📋 Daftar Pembelian
+      </h3>
 
+      {/* === Filter === */}
+      <div
+        style={{
+          position: "relative",
+          display: "inline-block",
+          marginBottom: 10,
+        }}
+      >
+        <FaSearch
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: 10,
+            transform: "translateY(-50%)",
+            color: "#888",
+            pointerEvents: "none",
+          }}
+        />
+        <input
+          type="text"
+          placeholder="Cari kode atau nama barang..."
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+          style={{
+            padding: "6px 8px 6px 32px",
+            fontSize: "1rem",
+            width: "250px",
+            borderRadius: 4,
+            border: "1px solid #ccc",
+            transition: "all 0.2s ease",
+            outline: "none",
+          }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "#2ECC71")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "#ccc")}
+        />
+      </div>
+
+      {/* === Notifikasi === */}
+      {showMessage && (
+        <div
+          style={{
+            marginBottom: 10,
+            padding: "6px 12px",
+            backgroundColor: "#D5F5E3",
+            color: "#145A32",
+            borderRadius: 5,
+            fontWeight: "bold",
+            transition: "opacity 0.3s",
+          }}
+        >
+          ✅ Baru saja menambah data
+        </div>
+      )}
+
+      {/* === Tabel === */}
+      <DataTable
+        columns={columns}
+        data={filteredPurchases}
+        pagination
+        paginationPerPage={20}
+        paginationRowsPerPageOptions={[10, 20, 30, 50, 100]}
+        highlightOnHover
+        responsive
+        customStyles={customStyles}
+        noDataComponent="Belum ada data pembelian"
+      />
 
       {/* ==== MODAL UPDATE ==== */}
       {selectedPurchase && (
@@ -677,7 +800,9 @@ export default function PurchasePage() {
             <input
               type="text"
               value={modalData.name}
-              onChange={(e) => setModalData({ ...modalData, name: e.target.value })}
+              onChange={(e) =>
+                setModalData({ ...modalData, name: e.target.value })
+              }
               style={{ ...inputStyle, width: "100%" }}
               onFocus={handleFocusStyle}
               onBlur={handleBlurStyle}
@@ -687,7 +812,12 @@ export default function PurchasePage() {
             <input
               type="number"
               value={modalData.quantity}
-              onChange={(e) => setModalData({ ...modalData, quantity: parseInt(e.target.value) })}
+              onChange={(e) =>
+                setModalData({
+                  ...modalData,
+                  quantity: parseInt(e.target.value),
+                })
+              }
               style={{ ...inputStyle, width: "100%" }}
               onFocus={handleFocusStyle}
               onBlur={handleBlurStyle}
@@ -697,7 +827,12 @@ export default function PurchasePage() {
             <input
               type="number"
               value={modalData.total_cost}
-              onChange={(e) => setModalData({ ...modalData, total_cost: parseFloat(e.target.value) })}
+              onChange={(e) =>
+                setModalData({
+                  ...modalData,
+                  total_cost: parseFloat(e.target.value),
+                })
+              }
               style={{ ...inputStyle, width: "100%" }}
               onFocus={handleFocusStyle}
               onBlur={handleBlurStyle}
@@ -716,7 +851,9 @@ export default function PurchasePage() {
             <input
               type="number"
               value={modalData.stock}
-              onChange={(e) => setModalData({ ...modalData, stock: parseInt(e.target.value) })}
+              onChange={(e) =>
+                setModalData({ ...modalData, stock: parseInt(e.target.value) })
+              }
               disabled={!manualStock}
               style={{
                 ...inputStyle,
@@ -728,7 +865,13 @@ export default function PurchasePage() {
               onBlur={handleBlurStyle}
             />
 
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: 10,
+              }}
+            >
               <button
                 onClick={handleSaveUpdate}
                 style={{
